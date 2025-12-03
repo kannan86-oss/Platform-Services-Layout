@@ -53,6 +53,12 @@ const App: React.FC = () => {
   const handleLayout2Switch = (subId: string) => {
     setActiveSubServiceId(subId);
   };
+  
+  // Handle Search Navigation
+  const handleSearchNavigation = (subId: string, categoryId: ServiceCategoryId) => {
+    setActiveSubServiceId(subId);
+    setExpandedCategoryId(categoryId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-200 font-sans text-gray-900 dark:text-gray-100">
@@ -63,6 +69,7 @@ const App: React.FC = () => {
         onTabChange={setActiveTopTab} 
         isDark={isDark} 
         toggleTheme={toggleTheme} 
+        onSearchSelect={handleSearchNavigation}
       />
 
       {/* Main Layout Area */}
