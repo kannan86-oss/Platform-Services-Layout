@@ -1,8 +1,7 @@
 
-import { ServiceCategory, TeamData, ServiceDetailData, Employee, User, Task, NavMenuItem, SystemLog, IntegrationConfig } from './types';
+import { ServiceCategory, TeamData, ServiceDetailData, Employee, User, Task, NavMenuItem, SystemLog, IntegrationConfig, TeamEvent, ServiceDocument, ServiceLink } from './types';
 
-// Updated Navigation Structure with Tracker Dropdown
-// Removed 'Audit' as it is now in Admin Console
+// Updated Navigation Structure
 export const NAV_MENU_ITEMS: NavMenuItem[] = [
   { label: 'Home', view: 'Home' },
   { label: 'Team details', view: 'Team details' },
@@ -18,8 +17,26 @@ export const NAV_MENU_ITEMS: NavMenuItem[] = [
       'Certification'
     ] 
   },
-  { label: 'MOR Report', view: 'MOR Report' },
-  { label: 'Reports', view: 'Reports' }
+  { 
+    label: 'Reports', 
+    children: [
+      'MOR Report',
+      'Reports' // Keeping general reports if needed, or MOR Report replaces it
+    ] 
+  },
+  { label: 'Team Events', view: 'Team Events' },
+  { label: 'Audit Trails', view: 'Audit Trails' },
+  { 
+    label: 'Documentation', 
+    children: [
+      'Documentation', // General view
+      'SOPs', 
+      'Onboarding', 
+      'KT documents', 
+      'Induction (NGAs)'
+    ] 
+  },
+  { label: 'Links', view: 'Links' }
 ];
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
@@ -153,4 +170,20 @@ export const MOCK_INTEGRATIONS: IntegrationConfig[] = [
   { id: 'i2', name: 'Active Directory (EMEA)', type: 'OAUTH', status: 'Connected', lastSync: '1 min ago' },
   { id: 'i3', name: 'Splunk Logging', type: 'API', status: 'Error', lastSync: '2 days ago' },
   { id: 'i4', name: 'Legacy HR ODBC', type: 'ODBC', status: 'Disconnected', lastSync: 'Never' },
+];
+
+export const INITIAL_EVENTS: TeamEvent[] = [
+  { id: 'e1', name: 'Unix Team Lunch', schedule: new Date(Date.now() + 86400000).toISOString(), venue: 'Cafeteria A', activityType: 'In Campus', services: ['unix_l2', 'unix_l3'], createdBy: 'Sarah Admin' },
+  { id: 'e2', name: 'Cloud Certification Workshop', schedule: new Date(Date.now() + 172800000).toISOString(), venue: 'Training Room 4', activityType: 'In Campus', services: ['apac_build', 'nam_build'], createdBy: 'John Dev' },
+];
+
+export const INITIAL_DOCS: ServiceDocument[] = [
+  { id: 'd1', type: 'Document', name: 'Q3 Audit Report.pdf', url: '#', category: 'Audit', serviceId: 'unix_l3', uploadedBy: 'Sarah Admin', date: new Date().toISOString() },
+  { id: 'd2', type: 'URL', name: 'Evidence - ServiceNow Ticket 1234', url: 'https://servicenow.com/inc/1234', category: 'Audit', serviceId: 'unix_l3', uploadedBy: 'John Dev', date: new Date().toISOString() },
+  { id: 'd3', type: 'Document', name: 'Unix Server Hardening SOP', url: '#', category: 'Documentation', subCategory: 'SOPs', serviceId: 'unix_l2', uploadedBy: 'Sarah Admin', date: new Date().toISOString() },
+];
+
+export const INITIAL_LINKS: ServiceLink[] = [
+  { id: 'ln1', name: 'ServiceNow Portal', url: 'https://servicenow.com', services: ['unix_l3', 'wintel_l3', 'unix_l2'] },
+  { id: 'ln2', name: 'Cloud Dashboard', url: 'https://aws.amazon.com', services: ['apac_build', 'nam_build'] },
 ];

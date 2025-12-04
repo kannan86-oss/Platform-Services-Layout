@@ -74,6 +74,9 @@ const PlatformServicesApp: React.FC = () => {
     );
   }
 
+  // Determine if Sidebar should be shown
+  const showSidebar = !['Team Events', 'Links'].includes(activeTopTab);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-200 font-sans text-gray-900 dark:text-gray-100">
       
@@ -86,12 +89,14 @@ const PlatformServicesApp: React.FC = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar 
-          expandedCategoryId={expandedCategoryId}
-          activeSubServiceId={activeSubServiceId}
-          onToggleCategory={handleCategoryToggle}
-          onSelectSubService={handleSubServiceSelect}
-        />
+        {showSidebar && (
+          <Sidebar 
+            expandedCategoryId={expandedCategoryId}
+            activeSubServiceId={activeSubServiceId}
+            onToggleCategory={handleCategoryToggle}
+            onSelectSubService={handleSubServiceSelect}
+          />
+        )}
 
         <ContentArea 
           topTab={activeTopTab}

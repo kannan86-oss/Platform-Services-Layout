@@ -5,13 +5,20 @@ export type TopTab =
   | 'SOW' 
   | 'Shift Tracker' 
   | 'Leave Tracker' 
-  | 'MOR Report' 
   | 'Escalation' 
   | 'NEMS' 
   | 'Training' 
   | 'Certification' 
-  | 'Reports';
-// Audit removed from TopTab as it's now in Admin Console
+  | 'Reports'
+  | 'MOR Report'
+  | 'Team Events'
+  | 'Audit Trails'
+  | 'Documentation'
+  | 'SOPs'
+  | 'Onboarding'
+  | 'KT documents'
+  | 'Induction (NGAs)'
+  | 'Links';
 
 export type ServiceCategoryId = 
   | 'sa_l3' 
@@ -126,4 +133,35 @@ export interface Task {
   status: TaskStatus;
   priority: 'High' | 'Medium' | 'Low';
   createdAt: string;
+}
+
+// --- New Feature Data Types ---
+
+export interface TeamEvent {
+  id: string;
+  name: string;
+  schedule: string; // ISO Date string
+  venue: string;
+  activityType: 'In Campus' | 'Out of Campus';
+  services: string[]; // List of sub-service IDs
+  createdBy: string;
+}
+
+export interface ServiceDocument {
+  id: string;
+  type: 'Document' | 'URL';
+  name: string;
+  url: string; // File path or web URL
+  category: 'Audit' | 'Documentation';
+  subCategory?: string; // For SOPs, Onboarding etc.
+  serviceId: string; // Sub-service ID
+  uploadedBy: string;
+  date: string;
+}
+
+export interface ServiceLink {
+  id: string;
+  name: string;
+  url: string;
+  services: string[]; // List of sub-service IDs
 }

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, Notification, AuditLog, Task, TaskStatus, SystemLog } from './types';
-import { MOCK_USERS, INITIAL_TASKS, MOCK_SYSTEM_LOGS } from './constants';
+import { User, Notification, AuditLog, Task, TaskStatus, SystemLog, TeamEvent, ServiceDocument, ServiceLink } from './types';
+import { MOCK_USERS, INITIAL_TASKS, MOCK_SYSTEM_LOGS, INITIAL_EVENTS, INITIAL_DOCS, INITIAL_LINKS } from './constants';
 
 // --- Context Definitions ---
 
@@ -10,7 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (username: string, pass: string, domain: string) => Promise<boolean>;
   logout: () => void;
-  usersList: User[]; // For RBAC management
+  usersList: User[];
   updateUserRole: (id: string, role: User['role']) => void;
 }
 
@@ -41,11 +41,23 @@ interface TaskContextType {
   updateTaskStatus: (taskId: string, status: TaskStatus) => void;
 }
 
+interface DataContextType {
+  events: TeamEvent[];
+  addEvent: (event: Omit<TeamEvent, 'id' | 'createdBy'>) => void;
+  
+  documents: ServiceDocument[];
+  addDocument: (doc: Omit<ServiceDocument, 'id' | 'uploadedBy' | 'date'>) => void;
+  
+  links: ServiceLink[];
+  addLink: (link: Omit<ServiceLink, 'id'>) => void;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 const AuditContext = createContext<AuditContextType | undefined>(undefined);
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
+const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // --- Provider Component ---
 
@@ -66,6 +78,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Task State
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+
+  // New Data States
+  const [events, setEvents] = useState<TeamEvent[]>(INITIAL_EVENTS);
+  const [documents, setDocuments] = useState<ServiceDocument[]>(INITIAL_DOCS);
+  const [links, setLinks] = useState<ServiceLink[]>(INITIAL_LINKS);
 
   // Helper: Add Notification
   const addNotification = (message: string, type: Notification['type']) => {
@@ -102,12 +119,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Auth Actions
   const login = async (username: string, pass: string, domain: string): Promise<boolean> => {
-    // Simulating API call to server.js
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Mock validation: "admin", "editor", "viewer" as usernames, pass "123"
-        // In reality, this would fetch('/api/login')
-        
         let foundUser: User | undefined;
         if (username.toLowerCase().includes('admin')) foundUser = usersList.find(u => u.role === 'Admin');
         else if (username.toLowerCase().includes('editor')) foundUser = usersList.find(u => u.role === 'Editor');
@@ -159,6 +172,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     logAction('Task Updated', `Task "${task?.title}" moved to ${status}`);
   };
 
+  // Data Actions
+  const addEvent = (eventData: Omit<TeamEvent, 'id' | 'createdBy'>) => {
+    if (!user) return;
+    const newEvent: TeamEvent = {
+      ...eventData,
+      id: Date.now().toString(),
+      createdBy: user.name
+    };
+    setEvents(prev => [newEvent, ...prev]);
+    logAction('Event Created', `Event "${eventData.name}" created`);
+    addNotification('Team Event created', 'success');
+  };
+
+  const addDocument = (docData: Omit<ServiceDocument, 'id' | 'uploadedBy' | 'date'>) => {
+    if (!user) return;
+    const newDoc: ServiceDocument = {
+      ...docData,
+      id: Date.now().toString(),
+      uploadedBy: user.name,
+      date: new Date().toISOString()
+    };
+    setDocuments(prev => [newDoc, ...prev]);
+    logAction('Document Added', `${docData.type} "${docData.name}" added to ${docData.category}`);
+    addNotification('Document added successfully', 'success');
+  };
+
+  const addLink = (linkData: Omit<ServiceLink, 'id'>) => {
+    const newLink: ServiceLink = {
+      ...linkData,
+      id: Date.now().toString()
+    };
+    setLinks(prev => [newLink, ...prev]);
+    logAction('Link Added', `Link "${linkData.name}" added`);
+    addNotification('Link added successfully', 'success');
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -167,7 +216,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, removeNotification, markAsRead, markAllAsRead }}>
           <AuditContext.Provider value={{ logs, logAction }}>
             <TaskContext.Provider value={{ tasks, addTask, updateTaskStatus }}>
-              {children}
+              <DataContext.Provider value={{ events, addEvent, documents, addDocument, links, addLink }}>
+                {children}
+              </DataContext.Provider>
             </TaskContext.Provider>
           </AuditContext.Provider>
         </NotificationContext.Provider>
@@ -205,5 +256,11 @@ export const useAudit = () => {
 export const useTasks = () => {
   const context = useContext(TaskContext);
   if (!context) throw new Error('useTasks must be used within AppProvider');
+  return context;
+};
+
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useData must be used within AppProvider');
   return context;
 };
