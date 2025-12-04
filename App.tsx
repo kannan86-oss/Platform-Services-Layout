@@ -1,14 +1,21 @@
+
 import React, { useState, useEffect } from 'react';
 import { TopNav } from './components/TopNav';
 import { Sidebar } from './components/Sidebar';
 import { ContentArea } from './components/ContentArea';
 import { TopTab, ServiceCategoryId } from './types';
-import { SERVICE_CATEGORIES } from './constants';
+import { ToastContainer } from './components/LayoutComponents';
+import { AppProvider, useAuth, useAppState } from './context';
+import { LoginScreen } from './components/LoginScreen';
+import { AdminConsole } from './components/AdminConsole';
 
-const App: React.FC = () => {
+// Inner App Component to access context
+const PlatformServicesApp: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const { isAdminConsoleOpen } = useAppState();
+
   // Theme State
   const [isDark, setIsDark] = useState<boolean>(() => {
-    // Check localStorage or System Preference
     if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('theme');
         if (saved) return saved === 'dark';
@@ -43,27 +50,33 @@ const App: React.FC = () => {
 
   const handleSubServiceSelect = (subId: string, categoryId: ServiceCategoryId) => {
     setActiveSubServiceId(subId);
-    // Ensure category remains open/synced (though the UI implies it is already open if clicking sub)
     if (expandedCategoryId !== categoryId) {
         setExpandedCategoryId(categoryId);
     }
   };
 
-  // Only switching sub-service within the active category view (Layout 2)
   const handleLayout2Switch = (subId: string) => {
     setActiveSubServiceId(subId);
   };
   
-  // Handle Search Navigation
   const handleSearchNavigation = (subId: string, categoryId: ServiceCategoryId) => {
     setActiveSubServiceId(subId);
     setExpandedCategoryId(categoryId);
   };
 
+  // Auth Guard
+  if (!isAuthenticated) {
+    return (
+      <div className="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200">
+        <LoginScreen />
+        <ToastContainer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-200 font-sans text-gray-900 dark:text-gray-100">
       
-      {/* Top Navigation */}
       <TopNav 
         activeTab={activeTopTab} 
         onTabChange={setActiveTopTab} 
@@ -72,10 +85,7 @@ const App: React.FC = () => {
         onSearchSelect={handleSearchNavigation}
       />
 
-      {/* Main Layout Area */}
       <div className="flex flex-1 overflow-hidden">
-        
-        {/* Layout 1: Sidebar */}
         <Sidebar 
           expandedCategoryId={expandedCategoryId}
           activeSubServiceId={activeSubServiceId}
@@ -83,16 +93,25 @@ const App: React.FC = () => {
           onSelectSubService={handleSubServiceSelect}
         />
 
-        {/* Layout 2 & 3: Content */}
         <ContentArea 
           topTab={activeTopTab}
-          categoryId={expandedCategoryId} // Pass current expanded category as context context
+          categoryId={expandedCategoryId}
           activeSubServiceId={activeSubServiceId}
           onSubServiceChange={handleLayout2Switch}
         />
-        
       </div>
+
+      {isAdminConsoleOpen && <AdminConsole />}
+      <ToastContainer />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AppProvider>
+      <PlatformServicesApp />
+    </AppProvider>
   );
 };
 

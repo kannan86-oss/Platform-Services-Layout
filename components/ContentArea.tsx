@@ -1,8 +1,10 @@
-import React from 'react';
-import { TopTab, ServiceCategoryId, SubService } from '../types';
+
+import React, { useState } from 'react';
+import { TopTab, ServiceCategoryId } from '../types';
 import { SERVICE_CATEGORIES, MOCK_TEAM_DATA, MOCK_HOME_DATA } from '../constants';
 import { Card, SectionHeader, Badge } from './LayoutComponents';
-import { Users, UserCheck, Calendar, Award, AlertCircle, FileText, ClipboardList } from 'lucide-react';
+import { Users, UserCheck, Calendar, Award, AlertCircle, FileText, ClipboardList, Plus, Clock, CheckCircle2 } from 'lucide-react';
+import { useAuth, useTasks, useNotification } from '../context';
 
 interface ContentAreaProps {
   topTab: TopTab;
@@ -18,10 +20,28 @@ export const ContentArea: React.FC<ContentAreaProps> = ({
   onSubServiceChange
 }) => {
   
+  const { user } = useAuth();
+  const { tasks, addTask, updateTaskStatus } = useTasks();
+  const { addNotification } = useNotification();
+  
   const activeCategory = SERVICE_CATEGORIES.find(c => c.id === categoryId);
   const activeSubService = activeCategory?.subServices.find(s => s.id === activeSubServiceId);
 
-  // If no category selected, show a welcome state
+  // New Task Form State
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDesc, setNewTaskDesc] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState<'Low'|'Medium'|'High'>('Medium');
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!newTaskTitle) return;
+    addTask(newTaskTitle, newTaskDesc, newTaskPriority);
+    setShowTaskForm(false);
+    setNewTaskTitle('');
+    setNewTaskDesc('');
+  };
+
   if (!activeCategory || !activeSubService) {
     return (
       <div className="flex-1 p-10 flex flex-col items-center justify-center text-center h-full">
@@ -221,15 +241,106 @@ export const ContentArea: React.FC<ContentAreaProps> = ({
            </div>
         );
 
+      case 'Escalation':
+        return (
+          <div className="animate-fade-in space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <SectionHeader title="Escalation & Tasks" subtitle="Manage incidents and operational tasks" />
+              <button 
+                onClick={() => setShowTaskForm(true)}
+                className="flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors shadow-sm"
+              >
+                <Plus className="w-5 h-5 mr-2" /> New Task
+              </button>
+            </div>
+
+            {/* Task Creation Modal */}
+            {showTaskForm && (
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg border border-primary-100 dark:border-slate-600 mb-6 animate-slide-in">
+                <h4 className="font-bold text-lg mb-4">Create New Task</h4>
+                <form onSubmit={handleCreateTask} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Title</label>
+                    <input autoFocus type="text" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} className="w-full p-2 rounded border dark:bg-slate-700 dark:border-slate-600" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Description</label>
+                    <input type="text" value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} className="w-full p-2 rounded border dark:bg-slate-700 dark:border-slate-600" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Priority</label>
+                    <select value={newTaskPriority} onChange={e => setNewTaskPriority(e.target.value as any)} className="w-full p-2 rounded border dark:bg-slate-700 dark:border-slate-600">
+                      <option>Low</option>
+                      <option>Medium</option>
+                      <option>High</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button type="button" onClick={() => setShowTaskForm(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-primary-600 text-white rounded">Create</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Task Board */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(['Pending', 'In Progress', 'Completed'] as const).map(status => (
+                <div key={status} className="bg-gray-100 dark:bg-slate-800/50 rounded-xl p-4 min-h-[400px]">
+                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center justify-between">
+                    {status}
+                    <span className="bg-gray-200 dark:bg-slate-700 px-2 py-1 rounded-full text-xs">
+                      {tasks.filter(t => t.status === status).length}
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {tasks.filter(t => t.status === status).map(task => (
+                      <div key={task.id} className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-2">
+                          <Badge status={task.priority} />
+                          <span className="text-xs text-gray-400">{new Date(task.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{task.title}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{task.description}</p>
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Users className="w-3 h-3 mr-1" /> {task.assignee}
+                          </div>
+                          
+                          <div className="flex space-x-1">
+                            {status !== 'Pending' && (
+                              <button onClick={() => updateTaskStatus(task.id, status === 'Completed' ? 'In Progress' : 'Pending')} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded" title="Move Back">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                              </button>
+                            )}
+                            {status !== 'Completed' && (
+                              <button onClick={() => updateTaskStatus(task.id, status === 'Pending' ? 'In Progress' : 'Completed')} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded" title="Move Forward">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="flex flex-col items-center justify-center h-96 bg-gray-50 dark:bg-slate-800 rounded-lg border border-dashed border-gray-300 dark:border-slate-700 animate-fade-in">
             <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">{topTab} Module</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm text-center">
-              This module for <strong>{activeSubService.name}</strong> is currently under development or maintenance.
+              This module for <strong>{activeSubService.name}</strong> is currently under development.
             </p>
-            <button className="mt-6 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
+            <button 
+              onClick={() => addNotification('Documentation not available yet', 'warning')}
+              className="mt-6 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+            >
               View Documentation
             </button>
           </div>

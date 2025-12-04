@@ -1,8 +1,25 @@
-import { ServiceCategory, TopTab, TeamData, ServiceDetailData, Employee } from './types';
 
-export const TOP_TABS: TopTab[] = [
-  'Home', 'Team details', 'SOW', 'Shift Tracker', 'Leave Tracker', 
-  'MOR Report', 'Escalation', 'NEMS', 'Training', 'Certification', 'Audit', 'Reports'
+import { ServiceCategory, TeamData, ServiceDetailData, Employee, User, Task, NavMenuItem, SystemLog, IntegrationConfig } from './types';
+
+// Updated Navigation Structure with Tracker Dropdown
+// Removed 'Audit' as it is now in Admin Console
+export const NAV_MENU_ITEMS: NavMenuItem[] = [
+  { label: 'Home', view: 'Home' },
+  { label: 'Team details', view: 'Team details' },
+  { label: 'SOW', view: 'SOW' },
+  { 
+    label: 'Tracker', 
+    children: [
+      'Shift Tracker', 
+      'Leave Tracker', 
+      'Escalation', 
+      'NEMS', 
+      'Training', 
+      'Certification'
+    ] 
+  },
+  { label: 'MOR Report', view: 'MOR Report' },
+  { label: 'Reports', view: 'Reports' }
 ];
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
@@ -111,3 +128,29 @@ export const MOCK_HOME_DATA: Record<string, ServiceDetailData> = {
     upcomingEvents: ["Annual Team Outing", "Quarterly Business Review"]
   }
 };
+
+export const MOCK_USERS: User[] = [
+  { id: 'u1', name: 'Sarah Admin', email: 'sarah.admin@platform.com', role: 'Admin', avatar: 'https://ui-avatars.com/api/?name=Sarah+Admin&background=0D8ABC&color=fff' },
+  { id: 'u2', name: 'John Dev', email: 'john.dev@platform.com', role: 'Editor', avatar: 'https://ui-avatars.com/api/?name=John+Dev&background=random' },
+  { id: 'u3', name: 'Guest Viewer', email: 'guest@platform.com', role: 'Viewer', avatar: 'https://ui-avatars.com/api/?name=Guest+Viewer&background=random' },
+];
+
+export const INITIAL_TASKS: Task[] = [
+  { id: 't1', title: 'Review Q3 Unix Incident Reports', description: 'Analyze high severity incidents for Unix L3', assignee: 'Unix L3 Lead', status: 'Pending', priority: 'High', createdAt: new Date().toISOString() },
+  { id: 't2', title: 'Update Wintel Patching Schedule', description: 'Coordinate with business units for next maintenance window', assignee: 'Wintel Admin', status: 'In Progress', priority: 'Medium', createdAt: new Date().toISOString() },
+  { id: 't3', title: 'Audit VM Guest Access Logs', description: 'Quarterly compliance check', assignee: 'Security Lead', status: 'Completed', priority: 'High', createdAt: new Date().toISOString() },
+];
+
+export const MOCK_SYSTEM_LOGS: SystemLog[] = [
+  { id: 'l1', type: 'error', message: 'Connection timeout: LDAP Server #2', source: 'AuthService', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
+  { id: 'l2', type: 'warning', message: 'High latency detected in Layout 3 rendering', source: 'Frontend', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+  { id: 'l3', type: 'feedback', message: 'Dark mode contrast needs improvement on reports page', source: 'User Feedback', timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString() },
+  { id: 'l4', type: 'info', message: 'Shift Roster synced successfully', source: 'IntegrationService', timestamp: new Date(Date.now() - 1000 * 60 * 200).toISOString() },
+];
+
+export const MOCK_INTEGRATIONS: IntegrationConfig[] = [
+  { id: 'i1', name: 'ServiceNow ITSM', type: 'API', status: 'Connected', lastSync: '10 mins ago' },
+  { id: 'i2', name: 'Active Directory (EMEA)', type: 'OAUTH', status: 'Connected', lastSync: '1 min ago' },
+  { id: 'i3', name: 'Splunk Logging', type: 'API', status: 'Error', lastSync: '2 days ago' },
+  { id: 'i4', name: 'Legacy HR ODBC', type: 'ODBC', status: 'Disconnected', lastSync: 'Never' },
+];
